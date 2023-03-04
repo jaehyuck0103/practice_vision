@@ -1,8 +1,11 @@
 from datetime import datetime
 from pathlib import Path
 
+import cv2
+import numpy as np
 import pytorch_lightning as pl
 import tomli
+import torch
 import typer
 from pydantic import BaseModel, StrictInt
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -12,6 +15,11 @@ from pl_template.callbacks.my_printing_callback import MyPrintingCallback
 from pl_template.callbacks.scalar_tb_callback import ScalarTensorboardCallback
 from project_name.datasets import DatasetCfg, get_dataset
 from project_name.pl_modules.classification import PlClassification, PlClassificationCfg
+
+torch.backends.cudnn.benchmark = True
+cv2.setNumThreads(0)
+cv2.ocl.setUseOpenCL(False)
+np.set_printoptions(linewidth=100)
 
 
 class TrainCfg(BaseModel):
@@ -37,14 +45,14 @@ def main(config_path: Path):
         shuffle=True,
         drop_last=True,
         pin_memory=True,
-        num_workers=4,
+        num_workers=8,
     )
     val_loader = data.DataLoader(
         val_dataset,
         batch_size=cfg.val_batch_size,
         shuffle=False,
         drop_last=False,
-        num_workers=4,
+        num_workers=8,
     )
 
     trainer = pl.Trainer(
@@ -60,6 +68,7 @@ def main(config_path: Path):
         ],
         enable_progress_bar=False,
         logger=False,
+        precision=32,
     )
 
     model = PlClassification(cfg.pl_module)

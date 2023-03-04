@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
+from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
 
 
-class Cifar10Cfg(BaseModel):
-    name: Literal["cifar10"]
+class CifarCfg(BaseModel):
+    name: Literal["cifar"]
 
 
 test_transform = transforms.Compose(
@@ -41,3 +42,35 @@ def get_cifar(mode: str):
         return CIFAR10(root=DATASET_PATH, train=False, transform=test_transform, download=True)
     else:
         raise ValueError(mode)
+
+
+class Cifar(Dataset):
+    def __init__(self, cfg: CifarCfg, mode: str):
+        super().__init__()
+
+        self.mode = mode
+
+        DATASET_PATH = Path("Data")
+
+        if mode == "train":
+            self.dataset = CIFAR10(
+                root=DATASET_PATH, train=True, transform=train_transform, download=True
+            )
+        elif mode == "val":
+            self.dataset = CIFAR10(
+                root=DATASET_PATH, train=False, transform=test_transform, download=True
+            )
+        else:
+            raise ValueError(mode)
+
+    def __getitem__(self, _idx):
+
+        img, label = self.dataset[_idx]
+
+        # sample return
+        sample = {"img": img, "label": label}
+
+        return sample
+
+    def __len__(self):
+        return len(self.dataset)

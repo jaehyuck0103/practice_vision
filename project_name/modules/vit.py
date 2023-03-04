@@ -121,6 +121,5 @@ class ViT(nn.Module):
         x = x.transpose(0, 1)
         x = self.transformer(x)
         # Perform classification prediction
-        cls = x[0]
-        out = self.mlp_head(cls)
+        out = self.mlp_head(x[0])
         return out

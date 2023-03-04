@@ -1,8 +1,11 @@
-train_batch_size = 128
-val_batch_size = 128
+train_batch_size = 192
+val_batch_size = 192
 
 [dataset.specific]
-name = "cifar10"
+name = "imagenet"
+
+[pl_module]
+num_classes = 1000
 
 [pl_module.optim]
 lr_list = [3e-4, 4e-4, 5e-4]
@@ -14,8 +17,8 @@ embed_dim = 256
 hidden_dim = 512
 num_heads = 8
 num_layers = 6
-patch_size = 4
+patch_size = 16
 num_channels = 3
-num_patches = 64
-num_classes = 10
+num_patches = 196
+num_classes = 1000
 dropout = 0.2

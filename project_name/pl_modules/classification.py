@@ -16,6 +16,7 @@ class OptimCfg(BaseModel):
 
 
 class PlClassificationCfg(BaseModel):
+    num_classes: StrictInt
     optim: OptimCfg
     net: NetCfg
 
@@ -28,8 +29,10 @@ class PlClassification(pl.LightningModule):
 
         metrics = MetricCollection(
             {
-                "err/acc1": MulticlassAccuracy(num_classes=10),
-                "err/acc2": MulticlassAccuracy(num_classes=10, top_k=2),
+                "err/top1": MulticlassAccuracy(num_classes=cfg.num_classes, average="micro"),
+                "err/top5": MulticlassAccuracy(
+                    num_classes=cfg.num_classes, average="micro", top_k=5
+                ),
             }
         )
         self.train_metrics = metrics.clone()
@@ -48,9 +51,7 @@ class PlClassification(pl.LightningModule):
         )
         return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
-    def training_step(self, inputs_, batch_idx):
-
-        inputs = {"img": inputs_[0], "label": inputs_[1]}
+    def training_step(self, inputs, batch_idx):
 
         # Forward pass
         y_pred = self.net(inputs)  # (batch, n_class)
@@ -67,9 +68,7 @@ class PlClassification(pl.LightningModule):
 
         return {"loss": cur_loss, "losses": losses, "preds": y_pred, "target": y_gt}
 
-    def validation_step(self, inputs_, batch_idx, dataloader_idx=0):
-
-        inputs = {"img": inputs_[0], "label": inputs_[1]}
+    def validation_step(self, inputs, batch_idx, dataloader_idx=0):
 
         # Forward pass
         y_gt = inputs["label"]  # (B)
