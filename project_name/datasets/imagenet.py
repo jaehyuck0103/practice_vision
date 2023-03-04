@@ -1,9 +1,11 @@
+import math
+import random
 from pathlib import Path
 from typing import Literal
 
 import cv2
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, StrictFloat
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_tensor
 
@@ -15,6 +17,8 @@ DATASET_ROOT = {
 
 class ImagenetCfg(BaseModel):
     name: Literal["imagenet"]
+    mode: Literal["train"] | Literal["val"]
+    epoch_scale_factor: StrictFloat
 
 
 def _imread_float(f):
@@ -26,7 +30,7 @@ def _imread_float(f):
 
 
 class Imagenet(Dataset):
-    def __init__(self, cfg: ImagenetCfg, mode: str):
+    def __init__(self, cfg: ImagenetCfg):
         super().__init__()
 
         # assert
@@ -36,11 +40,17 @@ class Imagenet(Dataset):
         self.class_name_to_id = {name: id for id, name in enumerate(train_class_names)}
 
         # Load
-        self.mode = mode
-        root = DATASET_ROOT[mode]
+        self.mode = cfg.mode
+        root = DATASET_ROOT[cfg.mode]
         self.img_paths = list(root.glob("*/*.JPEG"))
 
+        #
+        self.epoch_scale_factor = cfg.epoch_scale_factor
+
     def __getitem__(self, _idx):
+
+        if self.epoch_scale_factor < 1:
+            _idx += len(self) * random.randrange(math.ceil(1 / self.epoch_scale_factor))
 
         img_path = self.img_paths[_idx % len(self.img_paths)]
         label = self.class_name_to_id[img_path.parent.name]
@@ -64,7 +74,4 @@ class Imagenet(Dataset):
         return sample
 
     def __len__(self):
-        if self.mode == "train":
-            return len(self.img_paths) * 10
-        else:
-            return len(self.img_paths)
+        return round(len(self.img_paths) * self.epoch_scale_factor)

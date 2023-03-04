@@ -1,8 +1,16 @@
 train_batch_size = 192
 val_batch_size = 192
 
-[dataset.specific]
+[train_dataset.specific]
 name = "imagenet"
+mode = "train"
+epoch_scale_factor = 10.0
+
+[[val_datasets]]
+[val_datasets.specific]
+name = "imagenet"
+mode = "val"
+epoch_scale_factor = 1.0
 
 [pl_module]
 num_classes = 1000

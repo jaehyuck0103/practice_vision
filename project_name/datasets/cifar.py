@@ -9,6 +9,7 @@ from torchvision.datasets import CIFAR10
 
 class CifarCfg(BaseModel):
     name: Literal["cifar"]
+    mode: Literal["train"] | Literal["val"]
 
 
 test_transform = transforms.Compose(
@@ -45,23 +46,23 @@ def get_cifar(mode: str):
 
 
 class Cifar(Dataset):
-    def __init__(self, cfg: CifarCfg, mode: str):
+    def __init__(self, cfg: CifarCfg):
         super().__init__()
 
-        self.mode = mode
+        self.mode = cfg.mode
 
         DATASET_PATH = Path("Data")
 
-        if mode == "train":
+        if cfg.mode == "train":
             self.dataset = CIFAR10(
                 root=DATASET_PATH, train=True, transform=train_transform, download=True
             )
-        elif mode == "val":
+        elif cfg.mode == "val":
             self.dataset = CIFAR10(
                 root=DATASET_PATH, train=False, transform=test_transform, download=True
             )
         else:
-            raise ValueError(mode)
+            raise ValueError(cfg.mode)
 
     def __getitem__(self, _idx):
 

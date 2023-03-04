@@ -1,8 +1,14 @@
 train_batch_size = 128
 val_batch_size = 128
 
-[dataset.specific]
+[train_dataset.specific]
 name = "cifar"
+mode = "train"
+
+[[val_datasets]]
+[val_datasets.specific]
+name = "cifar"
+mode = "val"
 
 [pl_module]
 num_classes = 10
