@@ -31,6 +31,13 @@ def setup_for_distributed(is_master):
     builtins.print = print_new
 
 
+def get_local_batch_size(global_batch_size: int, devices: int):
+    assert global_batch_size >= devices > 0
+    assert global_batch_size % devices == 0
+
+    return global_batch_size // devices
+
+
 class AverageMeter:
     def __init__(self):
         self.avg = 0
@@ -62,5 +69,4 @@ def get_epoch_lr(epoch: int, lrs: list[int], milestones: list[int]):
     for lr, ms in zip(lrs, milestones, strict=True):
         if epoch < ms:
             return lr
-
     return lrs[-1]

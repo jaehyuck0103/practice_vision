@@ -13,6 +13,7 @@ from torch.utils import data
 
 from pl_template.callbacks.my_printing_callback import MyPrintingCallback
 from pl_template.callbacks.scalar_tb_callback import ScalarTensorboardCallback
+from pl_template.utils.utils import get_local_batch_size
 from project_name.datasets import DatasetCfg, get_dataset
 from project_name.pl_modules.classification import PlClassification, PlClassificationCfg
 
@@ -42,7 +43,7 @@ def main(config_path: Path, devices: int = 1, precision: int = 32):
     # We define a set of data loaders that we can use for various purposes later.
     train_loader = data.DataLoader(
         train_dataset,
-        batch_size=cfg.train_batch_size,
+        batch_size=get_local_batch_size(cfg.train_batch_size, devices),
         shuffle=True,
         drop_last=True,
         pin_memory=True,
@@ -51,7 +52,7 @@ def main(config_path: Path, devices: int = 1, precision: int = 32):
     val_loaders = [
         data.DataLoader(
             x,
-            batch_size=cfg.val_batch_size,
+            batch_size=get_local_batch_size(cfg.val_batch_size, devices),
             shuffle=False,
             drop_last=False,
             num_workers=8,
