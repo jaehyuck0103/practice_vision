@@ -4,6 +4,7 @@ import cv2
 import exif
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm, colors
 
 # from bfilter import bfilter
 
@@ -43,7 +44,12 @@ def gsolve(Z, B, l, w):
 
 
 def main():
-    file_list = sorted(Path("./InputImages/2").glob("*.jpg"))
+
+    input_dir = Path("Input/1")
+    output_dir = Path("Output") / input_dir.stem
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    file_list = sorted(input_dir.glob("*.jpg"))
     print(file_list)
 
     # Read image train
@@ -67,13 +73,23 @@ def main():
         [each_img[yy, xx, :] for each_img in imgs]
     )  # (num_imgs, num_sample_pixels, ch)
 
-    # Get Response function
+    # Get Response Function
     g = np.zeros((3, 256))
     g[0] = gsolve(samples[:, :, 0].transpose(), log_exposures, 100, w)
     g[1] = gsolve(samples[:, :, 1].transpose(), log_exposures, 100, w)
     g[2] = gsolve(samples[:, :, 2].transpose(), log_exposures, 100, w)
-    # fig, ax = plt.subplots()
-    # plt.show()
+
+    # Visualize Resoponse Function
+    fig, ax = plt.subplots()
+    y_axis = range(256)
+    ax.plot(g[0], y_axis, "r")
+    ax.plot(g[1], y_axis, "g")
+    ax.plot(g[2], y_axis, "b")
+
+    ax.set_title("Response Function")
+    ax.set_ylabel("pixel value")
+    ax.set_xlabel("log exposure")
+    fig.savefig(output_dir / "ResponseFunction.jpg")
 
     # Make Radiance Map
     rMap = np.zeros([imgH, imgW, 3])
@@ -110,9 +126,11 @@ def main():
 
     # Visualize Radiance Map
     rMapV = cv2.cvtColor(rMap, cv2.COLOR_RGB2GRAY)
-    rMapV = np.log(rMapV)
-    rMapV = (rMapV / rMapV.max()) * 255
-    cv2.imwrite("RadianceMap.png", rMapV)
+    fig, ax = plt.subplots()
+    axim = ax.imshow(rMapV, cmap=cm.rainbow, norm=colors.LogNorm())
+    ax.set_title("RadianceMap")
+    fig.colorbar(axim, ax=ax)
+    fig.savefig(output_dir / "RadianceMap.jpg")
 
     # Tone Mapping
     rMapY = cv2.cvtColor(rMap, cv2.COLOR_RGB2GRAY)
@@ -132,7 +150,7 @@ def main():
     rMapYLowMax = 10 ** rMapYLow.max()
     resultImg = resultImg / rMapYLowMax  # normalization
     resultImg = cv2.cvtColor(resultImg, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("Result.png", resultImg * 255)
+    cv2.imwrite(str(output_dir / "Tonemap.jpg"), resultImg * 255)
 
 
 if __name__ == "__main__":
